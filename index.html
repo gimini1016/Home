@@ -5,22 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="작은 아이디어를 멋진 경험으로 만드는 모멘트의 데모 홈페이지"
+      content="SNU 빅데이터 핀테크 AI 고급 전문가 과정에서 배우고 만든 것을 기록하는 데이터·AI 포트폴리오"
     />
-    <title>Moment — 데모 홈페이지</title>
+    <meta name="theme-color" content="#071b16" />
+    <title>JIMIN — Data & AI Portfolio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <header class="site-header">
-      <a class="logo" href="#top" aria-label="Moment 홈">
-        <span class="logo-mark">M</span>
-        <span>moment</span>
+      <a class="logo" href="#top" aria-label="홈으로 이동">
+        <span class="logo-dot"></span>
+        <span>JIMIN<span class="logo-muted">.DATA</span></span>
       </a>
 
       <button class="menu-button" type="button" aria-label="메뉴 열기" aria-expanded="false">
@@ -28,110 +29,235 @@
       </button>
 
       <nav class="nav" aria-label="주요 메뉴">
-        <a href="#about">소개</a>
-        <a href="#services">서비스</a>
-        <a href="#contact">문의</a>
-        <a class="nav-cta" href="#contact">시작하기</a>
+        <a href="#about">About</a>
+        <a href="#projects">Projects</a>
+        <a href="#coursework">Coursework</a>
+        <a href="#contact">Contact</a>
+        <a class="nav-github" href="https://github.com/gimini1016" target="_blank" rel="noreferrer">
+          GitHub ↗
+        </a>
       </nav>
     </header>
 
     <main id="top">
       <section class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow"><span></span> Simple ideas, meaningful moments</p>
-          <h1>좋은 아이디어가<br /><em>빛나는 순간.</em></h1>
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="hero-copy reveal">
+          <p class="eyebrow"><span class="status-dot"></span> OPEN TO NEW OPPORTUNITIES</p>
+          <h1>
+            Data tells a story.<br />
+            <em>I make it clear.</em>
+          </h1>
           <p class="hero-description">
-            복잡함은 덜어내고, 꼭 필요한 가치에 집중합니다.<br />
-            당신의 다음 아이디어를 더 선명한 경험으로 만들어보세요.
+            데이터에서 의미를 발견하고, 기술로 이해하기 쉬운 경험을 만듭니다.<br />
+            SNU 빅데이터 핀테크 AI 고급 전문가 과정에서 배우고 만든 것을 기록합니다.
           </p>
           <div class="hero-actions">
-            <a class="button button-primary" href="#services">
-              둘러보기 <span aria-hidden="true">↗</span>
+            <a class="button button-lime" href="#projects">프로젝트 보기 <span>↓</span></a>
+            <a class="text-link" href="https://github.com/gimini1016" target="_blank" rel="noreferrer">
+              github.com/gimini1016 ↗
             </a>
-            <a class="text-link" href="#about">우리의 이야기 <span>→</span></a>
           </div>
         </div>
 
-        <div class="hero-visual" aria-hidden="true">
-          <div class="orb orb-large"></div>
-          <div class="orb orb-small"></div>
-          <div class="glass-card card-one">
-            <span class="mini-label">TODAY</span>
-            <strong>Make it<br />remarkable.</strong>
-            <div class="progress"><span></span></div>
+        <aside class="hero-panel reveal" aria-label="현재 학습 정보">
+          <div class="panel-top">
+            <span>LEARNING LOG</span>
+            <span>2026</span>
           </div>
-          <div class="glass-card card-two">
-            <div class="avatar-stack">
-              <span>J</span><span>M</span><span>+</span>
-            </div>
-            <p>함께 만드는<br /><b>더 나은 순간</b></p>
+          <div class="data-orbit">
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <div class="orbit-core">AI</div>
+            <span class="orbit-label label-data">DATA</span>
+            <span class="orbit-label label-fintech">FINTECH</span>
+            <span class="orbit-label label-web">WEB</span>
           </div>
-          <span class="spark spark-one">✦</span>
-          <span class="spark spark-two">✦</span>
+          <div class="panel-stats">
+            <div><strong>02</strong><span>PROJECTS</span></div>
+            <div><strong>14+</strong><span>COURSES</span></div>
+            <div><strong>∞</strong><span>CURIOSITY</span></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="about section" id="about">
+        <div class="section-label reveal">
+          <span>01</span>
+          <p>ABOUT ME</p>
+        </div>
+        <div class="about-content reveal">
+          <h2>금융과 기술, 데이터가 만나는 곳에서<br /><em>가능성을 탐구합니다.</em></h2>
+          <div class="about-detail">
+            <p>
+              현재 서울대학교 빅데이터 핀테크 AI 고급 전문가 과정을 수강하며 통계,
+              프로그래밍, 인공지능, 금융 도메인을 폭넓게 학습하고 있습니다.
+            </p>
+            <p>
+              배운 내용을 프로젝트로 연결하고, 분석 과정과 결과를 누구나 이해할 수
+              있는 형태로 전달하는 데 관심이 있습니다.
+            </p>
+          </div>
+          <div class="skill-list" aria-label="관심 기술">
+            <span>Python</span><span>Data Analysis</span><span>Statistics</span>
+            <span>Data Visualization</span><span>AI / ML</span><span>FinTech</span>
+          </div>
         </div>
       </section>
 
-      <section class="statement" id="about">
-        <p class="section-number">01 — ABOUT</p>
-        <h2>작지만 분명한 변화는<br />한 번의 좋은 선택에서 시작됩니다.</h2>
-        <p>
-          Moment는 보기 좋은 디자인을 넘어, 사람에게 자연스럽고 오래 기억되는
-          디지털 경험을 고민합니다.
+      <section class="projects section" id="projects">
+        <div class="section-label light reveal">
+          <span>02</span>
+          <p>SELECTED PROJECTS</p>
+        </div>
+        <div class="projects-heading reveal">
+          <h2>배움을 결과물로<br /><em>연결한 기록.</em></h2>
+          <p>프로젝트 세부 내용과 저장소 링크는 진행에 맞춰 계속 업데이트됩니다.</p>
+        </div>
+
+        <div class="project-list">
+          <article class="project-card reveal">
+            <div class="project-meta">
+              <span class="project-number">01</span>
+              <span class="badge">DATA SCIENCE</span>
+            </div>
+            <div class="project-visual visual-stat" aria-hidden="true">
+              <div class="chart-bars">
+                <i style="--height: 38%"></i><i style="--height: 62%"></i>
+                <i style="--height: 48%"></i><i style="--height: 82%"></i>
+                <i style="--height: 67%"></i><i style="--height: 94%"></i>
+              </div>
+              <span class="chart-line"></span>
+              <span class="visual-caption">MODEL / ANALYSIS / INSIGHT</span>
+            </div>
+            <div class="project-copy">
+              <p class="project-course">통계데이터사이언스</p>
+              <h3>데이터로 질문하고<br />통계로 답하기</h3>
+              <p>
+                탐색적 데이터 분석부터 통계 모델링까지, 실제 데이터를 활용해 의미 있는
+                인사이트를 도출한 프로젝트입니다.
+              </p>
+              <div class="tags"><span>Python</span><span>Pandas</span><span>Statistics</span></div>
+              <span class="project-link pending">상세 내용 업데이트 예정</span>
+            </div>
+          </article>
+
+          <article class="project-card reverse reveal">
+            <div class="project-meta">
+              <span class="project-number">02</span>
+              <span class="badge">WEB & VISUALIZATION</span>
+            </div>
+            <div class="project-visual visual-web" aria-hidden="true">
+              <div class="browser">
+                <div class="browser-bar"><i></i><i></i><i></i></div>
+                <div class="mini-dashboard">
+                  <div class="mini-side"></div>
+                  <div class="mini-main">
+                    <span></span>
+                    <div><i></i><i></i><i></i><i></i></div>
+                  </div>
+                </div>
+              </div>
+              <span class="visual-caption">DESIGN / CODE / INTERACTION</span>
+            </div>
+            <div class="project-copy">
+              <p class="project-course">시각화웹개발</p>
+              <h3>데이터를 이해하기 쉬운<br />웹 경험으로</h3>
+              <p>
+                정보를 명확하게 전달하는 시각화와 반응형 웹 인터페이스를 직접
+                설계하고 구현한 프로젝트입니다.
+              </p>
+              <div class="tags"><span>HTML</span><span>CSS</span><span>JavaScript</span></div>
+              <a class="project-link" href="#top">현재 포트폴리오 보기 <span>↗</span></a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="coursework section" id="coursework">
+        <div class="section-label reveal">
+          <span>03</span>
+          <p>COURSEWORK</p>
+        </div>
+        <div class="course-heading reveal">
+          <h2>배우고 있는 것들.</h2>
+          <div class="legend">
+            <span><i class="dot project"></i> Project</span>
+            <span><i class="dot completed"></i> Exam completed</span>
+            <span><i class="dot progress"></i> In progress</span>
+          </div>
+        </div>
+
+        <div class="course-list reveal">
+          <div class="course-row">
+            <span class="course-code">01</span><strong>통계데이터사이언스</strong>
+            <span class="course-type">DATA</span><span class="course-status status-project">PROJECT</span>
+          </div>
+          <div class="course-row">
+            <span class="course-code">02</span><strong>시각화웹개발</strong>
+            <span class="course-type">WEB</span><span class="course-status status-project">PROJECT</span>
+          </div>
+          <div class="course-row">
+            <span class="course-code">03</span><strong>파이썬 프로그래밍</strong>
+            <span class="course-type">CODE</span><span class="course-status status-completed">EXAM COMPLETED</span>
+          </div>
+          <div class="course-row">
+            <span class="course-code">04</span><strong>AI 수학</strong>
+            <span class="course-type">MATH</span><span class="course-status status-completed">EXAM COMPLETED</span>
+          </div>
+          <div class="course-row">
+            <span class="course-code">05</span><strong>기계학습과 딥러닝</strong>
+            <span class="course-type">AI</span><span class="course-status status-progress">IN PROGRESS</span>
+          </div>
+          <div class="course-row">
+            <span class="course-code">06</span><strong>자연어처리</strong>
+            <span class="course-type">AI</span><span class="course-status status-progress">IN PROGRESS</span>
+          </div>
+          <div class="course-row">
+            <span class="course-code">07</span><strong>데이터베이스</strong>
+            <span class="course-type">DATA</span><span class="course-status status-progress">IN PROGRESS</span>
+          </div>
+          <div class="course-row">
+            <span class="course-code">08</span><strong>고급재무론 · 파생상품론</strong>
+            <span class="course-type">FINANCE</span><span class="course-status status-progress">IN PROGRESS</span>
+          </div>
+          <div class="course-row">
+            <span class="course-code">09</span><strong>핀테크와 암호 · 디지털화폐</strong>
+            <span class="course-type">FINTECH</span><span class="course-status status-progress">IN PROGRESS</span>
+          </div>
+          <div class="course-row">
+            <span class="course-code">10</span><strong>블록체인 · 알고리듬트레이딩</strong>
+            <span class="course-type">FINTECH</span><span class="course-status status-progress">IN PROGRESS</span>
+          </div>
+          <div class="course-row">
+            <span class="course-code">11</span><strong>서비스개발 · AI 응용</strong>
+            <span class="course-type">BUILD</span><span class="course-status status-progress">IN PROGRESS</span>
+          </div>
+        </div>
+        <p class="course-note reveal">
+          * 실제 수강 진행 상황에 따라 프로젝트와 학습 기록을 지속적으로 추가합니다.
         </p>
       </section>
 
-      <section class="services" id="services">
-        <div class="section-heading">
-          <div>
-            <p class="section-number">02 — WHAT WE DO</p>
-            <h2>아이디어에서<br />경험까지.</h2>
-          </div>
-          <p>필요한 것만 간결하게.<br />결과는 기대 이상으로.</p>
-        </div>
-
-        <div class="service-grid">
-          <article class="service-card">
-            <span class="service-icon">◒</span>
-            <p class="service-index">01</p>
-            <h3>브랜드 디자인</h3>
-            <p>브랜드의 핵심을 발견하고, 한눈에 기억되는 정체성을 설계합니다.</p>
-            <span class="card-arrow">↗</span>
-          </article>
-          <article class="service-card featured">
-            <span class="service-icon">⌁</span>
-            <p class="service-index">02</p>
-            <h3>웹 경험</h3>
-            <p>사용하기 편하고 비즈니스 목표에도 정확히 닿는 웹사이트를 만듭니다.</p>
-            <span class="card-arrow">↗</span>
-          </article>
-          <article class="service-card">
-            <span class="service-icon">✦</span>
-            <p class="service-index">03</p>
-            <h3>콘텐츠 전략</h3>
-            <p>사람의 마음을 움직이는 메시지와 일관된 콘텐츠 흐름을 만듭니다.</p>
-            <span class="card-arrow">↗</span>
-          </article>
-        </div>
-      </section>
-
       <section class="contact" id="contact">
-        <p class="section-number">03 — LET'S TALK</p>
-        <h2>다음 멋진 순간을<br /><em>함께 만들까요?</em></h2>
-        <a class="button button-light" href="mailto:hello@example.com">
-          이야기 시작하기 <span>↗</span>
-        </a>
-        <div class="contact-circle" aria-hidden="true"></div>
+        <div class="contact-copy reveal">
+          <p class="eyebrow"><span class="status-dot"></span> LET'S CONNECT</p>
+          <h2>데이터로 더 나은 답을 찾는<br /><em>여정을 이어갑니다.</em></h2>
+          <p>프로젝트, 협업 또는 새로운 기회에 관한 이야기를 기다립니다.</p>
+          <div class="contact-actions">
+            <a class="button button-dark" href="https://github.com/gimini1016" target="_blank" rel="noreferrer">
+              GitHub 방문하기 <span>↗</span>
+            </a>
+          </div>
+        </div>
+        <div class="contact-word" aria-hidden="true">DATA</div>
       </section>
     </main>
 
     <footer>
-      <a class="logo footer-logo" href="#top">
-        <span class="logo-mark">M</span><span>moment</span>
-      </a>
-      <p>© 2026 Moment. Demo project.</p>
-      <a href="https://github.com/gimini1016" target="_blank" rel="noreferrer">
-        GitHub · gimini1016 ↗
-      </a>
+      <a class="logo footer-logo" href="#top"><span class="logo-dot"></span>JIMIN.DATA</a>
+      <p>© 2026. Built with curiosity and data.</p>
+      <a href="#top">BACK TO TOP ↑</a>
     </footer>
 
     <script src="script.js"></script>
