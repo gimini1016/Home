@@ -15,7 +15,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css?v=20260723-2" />
+    <link rel="stylesheet" href="./style.css?v=20260807-1" />
   </head>
   <body>
     <header class="site-header">
@@ -31,6 +31,7 @@
       <nav class="nav" aria-label="주요 메뉴">
         <a href="#about">About</a>
         <a href="#projects">Projects</a>
+        <a href="#chart">Chart</a>
         <a href="#coursework">Coursework</a>
         <a href="#contact">Contact</a>
         <a class="nav-github" href="https://github.com/gimini1016" target="_blank" rel="noreferrer">
@@ -174,9 +175,62 @@
         </div>
       </section>
 
-      <section class="coursework section" id="coursework">
+      <section class="chart-section section" id="chart">
         <div class="section-label reveal">
           <span>03</span>
+          <p>LIVE MUSIC CHART</p>
+        </div>
+
+        <div class="chart-heading reveal">
+          <div>
+            <p class="chart-kicker">FASTAPI × JAVASCRIPT</p>
+            <h2>지금 주목받는<br /><em>TOP 10.</em></h2>
+          </div>
+          <p>
+            FastAPI 서버의 데이터를 JavaScript로 불러와 실시간으로 표시합니다.
+          </p>
+        </div>
+
+        <div class="live-chart-grid">
+          <article class="song-chart-card reveal" aria-labelledby="top10-title">
+            <div class="chart-card-header">
+              <div>
+                <p>UPDATED FROM API</p>
+                <h3 id="top10-title">Melon Top 10</h3>
+              </div>
+              <span class="live-badge"><i></i> LIVE</span>
+            </div>
+
+            <div class="api-state" id="songs-loading" role="status">
+              <span class="loading-spinner" aria-hidden="true"></span>
+              <span>차트를 불러오는 중입니다.</span>
+            </div>
+            <p class="api-error" id="songs-error" role="alert" hidden>
+              차트를 불러오지 못했습니다. FastAPI 서버가 실행 중인지 확인해 주세요.
+            </p>
+            <ol class="song-list" id="top-songs" aria-live="polite" hidden></ol>
+          </article>
+
+          <aside class="insight-card reveal" aria-labelledby="insight-title">
+            <p class="insight-label">DAILY INSIGHT</p>
+            <div class="insight-mark" aria-hidden="true">“</div>
+            <h3 id="insight-title">오늘의 차트 한 줄 평</h3>
+            <div class="api-state insight-loading" id="insight-loading" role="status">
+              <span class="loading-spinner" aria-hidden="true"></span>
+              <span>인사이트를 불러오는 중입니다.</span>
+            </div>
+            <p class="insight-text" id="chart-insight" aria-live="polite" hidden></p>
+            <p class="api-error insight-error" id="insight-error" role="alert" hidden>
+              오늘의 한 줄 평을 불러오지 못했습니다.
+            </p>
+            <span class="insight-source">SOURCE · MELON TOP 100 API</span>
+          </aside>
+        </div>
+      </section>
+
+      <section class="coursework section" id="coursework">
+        <div class="section-label reveal">
+          <span>04</span>
           <p>COURSEWORK</p>
         </div>
         <div class="course-heading reveal">
@@ -260,6 +314,6 @@
       <a href="#top">BACK TO TOP ↑</a>
     </footer>
 
-    <script src="./script.js?v=20260723-2"></script>
+    <script src="./script.js?v=20260807-1"></script>
   </body>
 </html>
