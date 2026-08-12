@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   PriceRow,
   PriceStoreConfigurationError,
+  PriceStoreRequestError,
   priceStoreRequest,
   toPublicPrice,
 } from "@/lib/price-store";
@@ -19,7 +20,11 @@ export async function GET() {
     return NextResponse.json([], {
       headers: {
         "Cache-Control": "no-store",
-        "X-Hanip-Price-Store": error instanceof PriceStoreConfigurationError ? "not-configured" : "error",
+        "X-Hanip-Price-Store": error instanceof PriceStoreConfigurationError
+          ? "not-configured"
+          : error instanceof PriceStoreRequestError
+            ? `request-${error.status}`
+            : "error",
       },
     });
   }
