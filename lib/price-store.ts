@@ -21,7 +21,7 @@ export class PriceStoreRequestError extends Error {
 }
 
 function configuration() {
-  const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
+  const url = process.env.SUPABASE_URL?.trim().replace(/\/rest\/v1\/?$/, "").replace(/\/$/, "");
   const apiKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !apiKey) {
     throw new PriceStoreConfigurationError("Supabase 연결 정보가 설정되지 않았습니다.");
