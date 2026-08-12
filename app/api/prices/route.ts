@@ -23,7 +23,7 @@ export async function GET() {
         "X-Hanip-Price-Store": error instanceof PriceStoreConfigurationError
           ? "not-configured"
           : error instanceof PriceStoreRequestError
-            ? `request-${error.status}`
+            ? `request-${error.status}${error.code ? `-${error.code}` : ""}`
             : "error",
       },
     });

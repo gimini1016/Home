@@ -15,7 +15,7 @@ export type PriceRow = {
 export class PriceStoreConfigurationError extends Error {}
 
 export class PriceStoreRequestError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(public status: number, message: string, public code = "") {
     super(message);
   }
 }
@@ -43,7 +43,12 @@ export async function priceStoreRequest<T>(path: string, init: RequestInit = {})
 
   if (!response.ok) {
     const detail = await response.text();
-    throw new PriceStoreRequestError(response.status, detail || "가격 데이터 요청에 실패했습니다.");
+    let code = "";
+    try {
+      const parsed = JSON.parse(detail) as { code?: unknown };
+      if (typeof parsed.code === "string" && /^[A-Z0-9_]+$/.test(parsed.code)) code = parsed.code;
+    } catch {}
+    throw new PriceStoreRequestError(response.status, detail || "가격 데이터 요청에 실패했습니다.", code);
   }
 
   if (response.status === 204) return undefined as T;
