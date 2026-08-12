@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import Papa from "papaparse";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, Check, ChevronLeft, ChevronRight, LocateFixed, MapPin, Menu as MenuIcon, Search, SlidersHorizontal, Trash2, UtensilsCrossed, X } from "lucide-react";
+import { ArrowDown, Check, ChevronLeft, ChevronRight, LocateFixed, MapPin, Menu as MenuIcon, Search, ShieldCheck, SlidersHorizontal, Trash2, UtensilsCrossed, X } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Legend, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ALLERGENS, BRAND_CATEGORIES, BRAND_CATEGORY_ORDER, BRAND_LOGOS } from "@/lib/brands";
-import type { Menu, Place, Store } from "@/lib/types";
+import type { Menu, Place, PriceRecord, Store } from "@/lib/types";
 import KakaoMap from "./KakaoMap";
 
 type Tab = "menus" | "cart" | "map" | "compare" | "about";
@@ -16,6 +17,7 @@ type SortMode = "recommended" | "protein" | "calories" | "sodium";
 
 const parseNumber = (value: unknown) => Number(value || 0);
 const mealFactor: Record<string, number> = { "감량": .8, "유지": 1, "증량": 1.12 };
+const priceKey = (brand: string, menu: string) => `${brand}\u0000${menu}`;
 
 function menuSection(menu: Menu) {
   const category = menu.category.trim();
@@ -128,19 +130,33 @@ export default function HanipApp() {
   const [mealFlight, setMealFlight] = useState<{ x: number; y: number; dx: number; dy: number; nonce: number } | null>(null);
 
   useEffect(() => {
-    fetch("/data/menus.csv").then((response) => response.text()).then((csv) => {
+    Promise.all([
+      fetch("/data/menus.csv").then((response) => response.text()),
+      fetch("/api/prices").then((response) => response.json()).catch(() => []),
+    ]).then(([csv, priceData]) => {
       const parsed = Papa.parse<Record<string, string>>(csv, { header: true, skipEmptyLines: true }).data;
-      const data = parsed.map((row, id) => ({
-        id, brand: row.brand, menu: row.menu, category: row.category,
-        calories: parseNumber(row.calories), protein: parseNumber(row.protein), fat: parseNumber(row.fat),
-        carbs: parseNumber(row.carbs), sodium: parseNumber(row.sodium),
-        allergens: (row.allergens || "").split("|").map((item) => item.trim()).filter(Boolean),
-        allergenKnown: row.allergen_known?.toLowerCase() === "true", sourceUrl: row.source_url,
-        imageUrl: row.image_url || "", description: row.description || "",
-        price: row.price ? parseNumber(row.price) : undefined, priceNote: row.price_note || "매장별 확인",
-        priceSourceUrl: row.price_source_url || "", priceCheckedAt: row.price_checked_at || "",
-        mediaSourceUrl: row.media_source_url || "", mediaCheckedAt: row.media_checked_at || ""
-      }));
+      const adminPrices = (Array.isArray(priceData) ? priceData : []).reduce<Record<string, PriceRecord>>((result, item: PriceRecord) => {
+        const key = priceKey(item.brand, item.menu);
+        const current = result[key];
+        if (!current || item.checkedAt > current.checkedAt || (item.checkedAt === current.checkedAt && item.price < current.price)) result[key] = item;
+        return result;
+      }, {});
+      const data = parsed.map((row, id) => {
+        const adminPrice = adminPrices[priceKey(row.brand, row.menu)];
+        return {
+          id, brand: row.brand, menu: row.menu, category: row.category,
+          calories: parseNumber(row.calories), protein: parseNumber(row.protein), fat: parseNumber(row.fat),
+          carbs: parseNumber(row.carbs), sodium: parseNumber(row.sodium),
+          allergens: (row.allergens || "").split("|").map((item) => item.trim()).filter(Boolean),
+          allergenKnown: row.allergen_known?.toLowerCase() === "true", sourceUrl: row.source_url,
+          imageUrl: row.image_url || "", description: row.description || "",
+          price: adminPrice?.price || (row.price ? parseNumber(row.price) : undefined),
+          priceNote: adminPrice ? `${adminPrice.channel} · ${adminPrice.storeName}` : row.price_note || "매장별 확인",
+          priceSourceUrl: adminPrice?.sourceUrl || row.price_source_url || "",
+          priceCheckedAt: adminPrice?.checkedAt || row.price_checked_at || "",
+          mediaSourceUrl: row.media_source_url || "", mediaCheckedAt: row.media_checked_at || ""
+        };
+      });
       setMenus(data);
       setBrands(Array.from(new Set(data.map((menu) => menu.brand))));
     });
@@ -296,8 +312,9 @@ export default function HanipApp() {
         {tab === "cart" && <div className="meal-workspace"><CartPanel items={cartItems} cart={cart} setCart={setCart} totals={totals} targetCalories={profileOn ? targetCalories : 2000} allergens={allergens} /><DetailComparePanel menus={menus} selection={detailSelection} setSelection={setDetailSelection} cartIds={cartMenuIds} /></div>}
         {tab === "map" && <MapPanel brands={brands} />}
         {tab === "compare" && <ComparePanel menus={filtered} brands={brandOptions} />}
-        {tab === "about" && <section className="panel prose"><h2>알레르기 표시 기준과 데이터 안내</h2><div className="law-card"><b>대한민국 · 의무표시</b><p><strong>근거법령</strong> 식품 등의 표시·광고에 관한 법률 시행규칙</p><p><strong>소관기관</strong> 식품의약품안전처</p><p><strong>표시 대상</strong> 알류(가금류), 우유, 메밀, 땅콩, 대두, 밀, 고등어, 게, 새우, 돼지고기, 복숭아, 토마토, 아황산류(최종제품 이산화황 10mg/kg 이상), 호두, 닭고기, 쇠고기, 오징어, 조개류(굴·전복·홍합 포함), 잣 및 이들 식품에서 추출한 성분을 원재료로 사용한 식품(젤라틴·새우엑기스 등)</p><p><strong>혼입 우려 표시 예시</strong> “○○ 혼입 가능”</p></div><p>영양·알레르기 정보는 각 브랜드 공식 자료를 기반으로 정리했습니다. ‘표시 알레르기 없음’은 알레르기 위험이 절대 없다는 뜻이 아닙니다. 교차오염 가능성과 원재료 변경이 있으므로 심한 알레르기가 있다면 반드시 주문 전 매장에 확인하세요.</p><p>매장 위치·검색은 카카오맵과 카카오 로컬 API를 사용합니다. 가격은 매장·배달 채널별로 달라질 수 있어 실시간 가격으로 제공하지 않습니다.</p></section>}
+        {tab === "about" && <section className="panel prose"><h2>알레르기 표시 기준과 데이터 안내</h2><div className="law-card"><b>대한민국 · 의무표시</b><p><strong>근거법령</strong> 식품 등의 표시·광고에 관한 법률 시행규칙</p><p><strong>소관기관</strong> 식품의약품안전처</p><p><strong>표시 대상</strong> 알류(가금류), 우유, 메밀, 땅콩, 대두, 밀, 고등어, 게, 새우, 돼지고기, 복숭아, 토마토, 아황산류(최종제품 이산화황 10mg/kg 이상), 호두, 닭고기, 쇠고기, 오징어, 조개류(굴·전복·홍합 포함), 잣 및 이들 식품에서 추출한 성분을 원재료로 사용한 식품(젤라틴·새우엑기스 등)</p><p><strong>혼입 우려 표시 예시</strong> “○○ 혼입 가능”</p></div><p>영양·알레르기 정보는 각 브랜드 공식 자료를 기반으로 정리했습니다. ‘표시 알레르기 없음’은 알레르기 위험이 절대 없다는 뜻이 아닙니다. 교차오염 가능성과 원재료 변경이 있으므로 심한 알레르기가 있다면 반드시 주문 전 매장에 확인하세요.</p><p>매장 위치·검색은 카카오맵과 카카오 로컬 API를 사용합니다. 가격은 관리자가 직접 확인한 날짜와 판매 채널을 함께 제공하며 실제 매장·배달 채널에서는 달라질 수 있습니다.</p></section>}
       </section>
+      <Link className="admin-entry" href="/admin/login" aria-label="관리자 로그인"><ShieldCheck size={15} /> 관리자</Link>
     </main>
   );
 }
@@ -321,7 +338,8 @@ function CartPanel({ items, cart, setCart, totals, targetCalories, allergens }: 
 
 function ComparePanel({ menus, brands }: { menus: Menu[]; brands: string[] }) {
   const data = brands.map((brand) => ({ brand, count: menus.filter((menu) => menu.brand === brand).length })).filter((row) => row.count);
-  return <section className="panel"><h2>브랜드별 선택 가능한 메뉴</h2><div className="chart"><ResponsiveContainer width="100%" height={360}><BarChart data={data}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="brand" /><YAxis allowDecimals={false} /><Tooltip /><Bar dataKey="count" name="메뉴 수" fill="#287653" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></div></section>;
+  const priceData = brands.map((brand) => { const values = menus.filter((menu) => menu.brand === brand && menu.price).map((menu) => menu.price as number); return values.length ? { brand, count: values.length, average: Math.round(values.reduce((sum, price) => sum + price, 0) / values.length), lowest: Math.min(...values) } : null; }).filter((item): item is { brand: string; count: number; average: number; lowest: number } => Boolean(item));
+  return <section className="panel"><h2>브랜드 비교</h2>{priceData.length ? <><p>현재 조건에 맞는 메뉴 중 확인된 가격만 비교합니다.</p><div className="price-compare-grid">{priceData.map((item) => <div key={item.brand}><span>{item.brand}</span><b>평균 {item.average.toLocaleString()}원</b><small>최저 {item.lowest.toLocaleString()}원 · {item.count}개 메뉴</small></div>)}</div></> : <div className="price-empty-note">아직 비교할 가격 데이터가 없습니다. 관리자가 가격을 등록하면 여기에 표시됩니다.</div>}<h3>선택 가능한 메뉴 수</h3><div className="chart"><ResponsiveContainer width="100%" height={360}><BarChart data={data}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="brand" /><YAxis allowDecimals={false} /><Tooltip /><Bar dataKey="count" name="메뉴 수" fill="#287653" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></div></section>;
 }
 
 const DETAIL_COLORS = ["#287653", "#2e7bd8", "#ef6552", "#a268d5"];
@@ -345,7 +363,7 @@ function DetailComparePanel({ menus, selection, setSelection, cartIds }: { menus
     <div className="compare-step add-after-chart"><span>+</span><b>다른 메뉴 직접 추가</b><small>{selection.length}/4 선택</small></div>
     <div className="detail-picker"><label className="search"><Search size={18} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="브랜드 또는 메뉴 이름 검색" /></label><select value="" disabled={selection.length >= 4} onChange={(e) => { addMenu(Number(e.target.value)); setSearch(""); }}><option value="">{selection.length >= 4 ? "최대 4개까지 선택할 수 있어요" : "검색 결과에서 메뉴 선택"}</option>{choices.map((menu) => <option key={menu.id} value={menu.id}>{menu.brand} · {menu.menu}</option>)}</select></div>
     {selected.length > 0 &&
-      <div className="detail-table-wrap"><table className="detail-table"><thead><tr><th>메뉴</th><th>가격</th><th>칼로리</th><th>단백질</th><th>포화지방</th><th>당류</th><th>나트륨</th></tr></thead><tbody>{selected.map((menu) => <tr key={menu.id}><td><b>{menu.brand}</b><span>{menu.menu}</span></td><td>매장별 확인</td><td>{menu.calories.toFixed(0)} kcal</td><td>{menu.protein.toFixed(1)} g</td><td>{menu.fat.toFixed(1)} g</td><td>{menu.carbs.toFixed(1)} g</td><td>{menu.sodium.toFixed(0)} mg</td></tr>)}</tbody></table></div>
+      <div className="detail-table-wrap"><table className="detail-table"><thead><tr><th>메뉴</th><th>가격</th><th>칼로리</th><th>단백질</th><th>포화지방</th><th>당류</th><th>나트륨</th></tr></thead><tbody>{selected.map((menu) => <tr key={menu.id}><td><b>{menu.brand}</b><span>{menu.menu}</span></td><td>{menu.price ? `${menu.price.toLocaleString()}원` : "매장별 확인"}</td><td>{menu.calories.toFixed(0)} kcal</td><td>{menu.protein.toFixed(1)} g</td><td>{menu.fat.toFixed(1)} g</td><td>{menu.carbs.toFixed(1)} g</td><td>{menu.sodium.toFixed(0)} mg</td></tr>)}</tbody></table></div>
     }
   </section>;
 }
