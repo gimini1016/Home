@@ -11,6 +11,7 @@ export type Menu = {
   allergens: string[];
   allergenKnown: boolean;
   sourceUrl: string;
+  sourceDate?: string;
   imageUrl?: string;
   description?: string;
   price?: number;

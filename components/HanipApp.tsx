@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Papa from "papaparse";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, Check, ChevronLeft, ChevronRight, LocateFixed, MapPin, Menu as MenuIcon, Search, ShieldCheck, SlidersHorizontal, Trash2, UtensilsCrossed, X } from "lucide-react";
+import { ArrowDown, Check, ChevronLeft, ChevronRight, ExternalLink, LocateFixed, MapPin, Menu as MenuIcon, RefreshCw, Search, ShieldCheck, SlidersHorizontal, Trash2, UtensilsCrossed, X } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Legend, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ALLERGENS, BRAND_CATEGORIES, BRAND_CATEGORY_ORDER, BRAND_LOGOS } from "@/lib/brands";
 import type { Menu, Place, PriceRecord, Store } from "@/lib/types";
@@ -14,10 +14,17 @@ type Tab = "menus" | "cart" | "map" | "compare" | "about";
 type Cart = Record<number, number>;
 type SafetyMode = "all" | "danger" | "safe";
 type SortMode = "recommended" | "protein" | "calories" | "sodium";
+type NutritionPreset = "default" | "light" | "protein" | "sodium" | "custom";
 
 const parseNumber = (value: unknown) => Number(value || 0);
 const mealFactor: Record<string, number> = { "감량": .8, "유지": 1, "증량": 1.12 };
 const priceKey = (brand: string, menu: string) => `${brand}\u0000${menu}`;
+const nutritionPresets: Array<{ id: Exclude<NutritionPreset, "custom">; label: string; description: string; maxCalories: number; minProtein: number; maxSodium: number }> = [
+  { id: "default", label: "기본 균형", description: "600kcal · 나트륨 1,500mg", maxCalories: 600, minProtein: 0, maxSodium: 1500 },
+  { id: "light", label: "가벼운 한 끼", description: "450kcal · 단백질 10g", maxCalories: 450, minProtein: 10, maxSodium: 1000 },
+  { id: "protein", label: "고단백 탐색", description: "단백질 20g · 700kcal", maxCalories: 700, minProtein: 20, maxSodium: 1800 },
+  { id: "sodium", label: "저나트륨 우선", description: "나트륨 600mg 이하", maxCalories: 700, minProtein: 0, maxSodium: 600 },
+];
 
 function menuSection(menu: Menu) {
   const category = menu.category.trim();
@@ -121,6 +128,8 @@ export default function HanipApp() {
   const [maxCalories, setMaxCalories] = useState(600);
   const [minProtein, setMinProtein] = useState(0);
   const [maxSodium, setMaxSodium] = useState(1500);
+  const [nutritionPreset, setNutritionPreset] = useState<NutritionPreset>("default");
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [profileOn, setProfileOn] = useState(false);
   const [profile, setProfile] = useState({ sex: "여성", age: 25, height: 165, weight: 60, goal: "감량" });
   const [openBrands, setOpenBrands] = useState<Record<string, boolean>>({});
@@ -149,6 +158,7 @@ export default function HanipApp() {
           carbs: parseNumber(row.carbs), sodium: parseNumber(row.sodium),
           allergens: (row.allergens || "").split("|").map((item) => item.trim()).filter(Boolean),
           allergenKnown: row.allergen_known?.toLowerCase() === "true", sourceUrl: row.source_url,
+          sourceDate: row.source_date || "",
           imageUrl: row.image_url || "", description: row.description || "",
           price: adminPrice?.price || (row.price ? parseNumber(row.price) : undefined),
           priceNote: adminPrice ? `${adminPrice.channel} · ${adminPrice.storeName}` : row.price_note || "매장별 확인",
@@ -254,8 +264,33 @@ export default function HanipApp() {
     window.requestAnimationFrame(() => brandMenuRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
 
+  const applyNutritionPreset = (presetId: Exclude<NutritionPreset, "custom">) => {
+    const preset = nutritionPresets.find((item) => item.id === presetId);
+    if (!preset) return;
+    setMaxCalories(preset.maxCalories);
+    setMinProtein(preset.minProtein);
+    setMaxSodium(preset.maxSodium);
+    setNutritionPreset(presetId);
+    setSpotlightIndex(0);
+  };
+
+  const sourceLinkedCount = menus.filter((menu) => Boolean(menu.sourceUrl)).length;
+  const allergenKnownCount = menus.filter((menu) => menu.allergenKnown).length;
+  const pricedCount = menus.filter((menu) => Boolean(menu.price)).length;
+  const sourceCoverage = menus.length ? Math.round(sourceLinkedCount / menus.length * 100) : 0;
+  const allergenCoverage = menus.length ? Math.round(allergenKnownCount / menus.length * 100) : 0;
+  const priceCoverage = menus.length ? Math.round(pricedCount / menus.length * 100) : 0;
+  const latestSourceDate = menus.reduce((latest, menu) => menu.sourceDate && menu.sourceDate > latest ? menu.sourceDate : latest, "");
+  const spotlightPool = filtered.some((menu) => menu.imageUrl) ? filtered.filter((menu) => menu.imageUrl) : filtered;
+  const spotlightMenu = spotlightPool.length ? spotlightPool[spotlightIndex % spotlightPool.length] : null;
+  const spotlightDanger = Boolean(spotlightMenu && allergens.some((item) => spotlightMenu.allergens.includes(item)));
+
   return (
-    <main>
+    <main className="hybrid-shell">
+      <nav className="hybrid-nav" aria-label="한입안심 주요 이동">
+        <a className="hybrid-wordmark" href="#top"><span aria-hidden="true">●</span> 한입안심</a>
+        <div className="hybrid-nav-meta"><span>{menus.length ? `공식 출처 · ${menus.length.toLocaleString()}개 메뉴` : "공식 메뉴 불러오는 중"}</span><a href="#explorer"><SlidersHorizontal size={16} /> 내 조건</a></div>
+      </nav>
       <button className={`quick-filter-trigger ${showQuickFilters ? "visible" : ""} ${quickFiltersMinimized ? "minimized" : ""}`} onClick={() => { setQuickFiltersOpen(true); setQuickFiltersMinimized(false); }}><SlidersHorizontal size={17} /> 조건 열기</button>
       <aside className={`quick-filter-panel ${showQuickFilters && !quickFiltersMinimized ? "visible" : ""} ${quickFiltersOpen ? "open" : ""}`}>
         <button className="quick-filter-close" onClick={() => setQuickFiltersOpen(false)} aria-label="조건 패널 닫기"><X size={20} /></button>
@@ -264,15 +299,42 @@ export default function HanipApp() {
         <div className="quick-group"><h3>알레르기</h3><div className="chips"><button className={allergens.length === 0 ? "chip active no-allergy" : "chip no-allergy"} onClick={() => setAllergens([])}>알레르기 없음</button>{ALLERGENS.map((item) => <button key={item} className={allergens.includes(item) ? "chip active" : "chip"} onClick={() => setAllergens((current) => current.includes(item) ? current.filter((x) => x !== item) : [...current, item])}>{item}</button>)}</div></div>
         <div className="quick-group"><h3>안전 상태</h3><div className="quick-safety"><button className={safetyMode === "all" ? "active" : ""} onClick={() => setSafetyMode("all")}>모두</button><button className={safetyMode === "safe" ? "active safe" : ""} onClick={() => setSafetyMode("safe")}>안전</button><button className={safetyMode === "danger" ? "active danger" : ""} onClick={() => setSafetyMode("danger")}>위험</button></div></div>
         <div className="quick-group"><h3>카테고리</h3><select value={brandCategory} onChange={(e) => setBrandCategory(e.target.value)}>{BRAND_CATEGORY_ORDER.map((item) => <option key={item}>{item}</option>)}</select></div>
-        <div className="quick-group quick-ranges"><Range label="최대 칼로리" value={maxCalories} min={100} max={1200} step={50} unit="kcal" onChange={setMaxCalories} /><Range label="최소 단백질" value={minProtein} min={0} max={60} step={5} unit="g" onChange={setMinProtein} /><Range label="최대 나트륨" value={maxSodium} min={100} max={3000} step={100} unit="mg" onChange={setMaxSodium} /></div>
+        <div className="quick-group quick-ranges"><Range label="최대 칼로리" value={maxCalories} min={100} max={1200} step={50} unit="kcal" onChange={(value) => { setMaxCalories(value); setNutritionPreset("custom"); }} /><Range label="최소 단백질" value={minProtein} min={0} max={60} step={5} unit="g" onChange={(value) => { setMinProtein(value); setNutritionPreset("custom"); }} /><Range label="최대 나트륨" value={maxSodium} min={100} max={3000} step={100} unit="mg" onChange={(value) => { setMaxSodium(value); setNutritionPreset("custom"); }} /></div>
       </aside>
       {showQuickFilters && quickFiltersOpen && <button className="quick-filter-backdrop" aria-label="닫기" onClick={() => setQuickFiltersOpen(false)} />}
       {mealFlight && <div key={mealFlight.nonce} className="meal-flight" style={{ left: mealFlight.x, top: mealFlight.y, "--flight-x": `${mealFlight.dx}px`, "--flight-y": `${mealFlight.dy}px` } as React.CSSProperties}><UtensilsCrossed size={16} /><span>+1</span></div>}
-      <header className="landing">
+      <header className="landing" id="top">
         <div className="landing-orb orb-one" /><div className="landing-orb orb-two" />
-        <div className="landing-copy"><div className="eyebrow">FRANCHISE FOOD GUIDE</div><p className="landing-brand">🍽️ 한입안심</p><h1>오늘의 한 끼,<br />안심하고 고르세요.</h1><p>알레르기와 영양 목표를 한 번 설정하면<br />여러 프랜차이즈 메뉴를 한곳에서 찾아드려요.</p><a href="#explorer">내 메뉴 찾아보기 <ArrowDown size={18} /></a></div>
-        <div className="landing-note"><span>ALLERGY</span><span>NUTRITION</span><span>NEARBY</span></div>
+        <div className="landing-copy"><div className="eyebrow">FRANCHISE FOOD GUIDE</div><p className="landing-brand">🍽️ 한입안심</p><h1>오늘의 한 끼,<br />안심하고 고르세요.</h1><p>알레르기, 영양 목표, 확인된 가격과 주변 매장까지.<br />흩어진 공식 정보를 한곳에서 비교하고 내 조건에 맞는 메뉴를 찾아보세요.</p><div className="landing-actions"><a href="#explorer">내 조건 설정 <SlidersHorizontal size={17} /></a><a className="landing-secondary" href="#workspace">메뉴 둘러보기 <ArrowDown size={17} /></a></div><div className="landing-status"><Check size={15} /><span>{menus.length ? `공식 출처 ${menus.length.toLocaleString()}개 메뉴 · ${brandOptions.length}개 브랜드${latestSourceDate ? ` · 최신 기준일 ${latestSourceDate}` : ""}` : "공식 메뉴 데이터를 불러오고 있습니다"}</span></div></div>
       </header>
+
+      <div className="hybrid-overview">
+        <section className="trust-stage" aria-labelledby="trust-title">
+          <div className="trust-copy"><span>WHAT YOU CAN TRUST</span><h2 id="trust-title">확인된 범위를,<br />한눈에.</h2><p>확인되지 않은 정보와 공개되지 않은 가격은 추정하지 않습니다. 알레르기·가격의 확인 범위와 출처를 메뉴마다 함께 보여드립니다.</p><button onClick={() => changeTab("about")}>데이터 기준 자세히 보기 <ChevronRight size={16} /></button></div>
+          <div className="trust-visual">
+            <div className="coverage-ring" style={{ "--coverage": `${allergenCoverage * 3.6}deg` } as React.CSSProperties}><div><strong>{allergenCoverage}%</strong><span>알레르기 정보<br />확인 가능</span><small>{allergenKnownCount.toLocaleString()} / {menus.length.toLocaleString()}개</small></div></div>
+            <div className="coverage-bars">
+              <CoverageBar label="공식 출처 연결" value={sourceCoverage} detail={`${sourceLinkedCount.toLocaleString()} / ${menus.length.toLocaleString()}개`} />
+              <CoverageBar label="가격 확인 가능" value={priceCoverage} detail={`${pricedCount.toLocaleString()} / ${menus.length.toLocaleString()}개`} price />
+              <p><Check size={14} /> 관리자 확인 가격은 Supabase에서 최신값 반영</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="hybrid-metrics" aria-label="서비스 현황">
+          <Metric label="추천 가능한 메뉴" value={`${filtered.length.toLocaleString()}개`} note={`전체 ${menus.length.toLocaleString()}개 메뉴`} />
+          <Metric label="선택 브랜드" value={`${brands.length}개`} note={`총 ${brandOptions.length}개 브랜드`} />
+          <Metric label="선택 알레르기" value={`${allergens.length}개`} note={allergens.length ? "조건 적용 중" : "선택 없음"} />
+          <Metric label="나의 한 끼" value={`${cartCount}개`} note={`${totals.calories.toFixed(0)} kcal`} />
+        </section>
+
+        <section className="decision-stage" aria-labelledby="decision-title">
+          <div className="decision-copy"><span>QUICK DECISION</span><h2 id="decision-title">한 번 눌러 조건을 바꾸고,<br />결과를 바로 확인하세요.</h2><p>빠른 조건은 영양 범위만 바꿉니다. 선택한 브랜드와 알레르기 조건은 그대로 유지됩니다.</p><div className="preset-grid">{nutritionPresets.map((preset) => <button key={preset.id} className={nutritionPreset === preset.id ? "active" : ""} onClick={() => applyNutritionPreset(preset.id)}><b>{preset.label}</b><small>{preset.description}</small></button>)}</div></div>
+          <article className={`spotlight-card ${spotlightDanger ? "danger" : ""}`}>
+            {spotlightMenu ? <><div className="spotlight-copy"><span>{spotlightMenu.brand} · {menuSection(spotlightMenu)}</span><h3>{spotlightMenu.menu}</h3><p>{spotlightMenu.protein >= 20 ? `단백질 ${spotlightMenu.protein.toFixed(0)}g을 포함해 현재 조건을 통과했습니다.` : `현재 설정한 영양·브랜드 조건을 통과한 메뉴입니다.`}</p><div className="spotlight-nutrients"><b>{spotlightMenu.calories.toFixed(0)}<small>kcal</small></b><b>{spotlightMenu.protein.toFixed(0)}<small>단백질 g</small></b><b>{spotlightMenu.sodium.toFixed(0)}<small>나트륨 mg</small></b></div><div className="spotlight-price"><strong>{spotlightMenu.price ? `${spotlightMenu.price.toLocaleString()}원` : "가격 미확인"}</strong><small>{spotlightMenu.price ? `${spotlightMenu.priceNote}${spotlightMenu.priceCheckedAt ? ` · ${spotlightMenu.priceCheckedAt}` : ""}` : "관리자가 확인하면 최신 가격이 반영됩니다"}</small></div></div><div className="spotlight-media"><img className="spotlight-menu-photo" src={spotlightMenu.imageUrl || BRAND_LOGOS[spotlightMenu.brand]} onError={(event) => { event.currentTarget.style.display = "none"; }} alt={spotlightMenu.imageUrl ? `${spotlightMenu.menu} 공식 메뉴 이미지` : `${spotlightMenu.brand} 로고`} /><img className="spotlight-brand-mark" src={BRAND_LOGOS[spotlightMenu.brand]} alt="" /></div><div className="spotlight-actions"><button disabled={spotlightPool.length < 2} onClick={() => setSpotlightIndex((current) => current + 1)}><RefreshCw size={16} /> 다른 메뉴</button><button className={added?.id === spotlightMenu.id ? "primary confirmed" : "primary"} onClick={(event) => addToCart(spotlightMenu.id, event)}><UtensilsCrossed size={16} /> {added?.id === spotlightMenu.id ? "담았어요" : "한 끼에 담기"}</button>{spotlightMenu.sourceUrl && <a href={spotlightMenu.sourceUrl} target="_blank" rel="noreferrer"><ExternalLink size={15} /> 공식 정보</a>}</div></> : <div className="spotlight-empty"><h3>조건에 맞는 메뉴가 없습니다.</h3><p>영양 범위를 넓히거나 브랜드를 다시 선택해 주세요.</p></div>}
+          </article>
+        </section>
+      </div>
 
       <section className="content" id="explorer">
         <Reveal><header className="section-intro"><span>01 · 내 조건</span><h2>나에게 맞는 기준부터 선택해요</h2><p>선택한 정보는 브라우저 안에서 메뉴를 찾는 데만 사용됩니다.</p></header></Reveal>
@@ -284,12 +346,12 @@ export default function HanipApp() {
             <button className={`danger-option ${safetyMode === "danger" ? "active" : ""}`} onClick={() => setSafetyMode("danger")}>위험한 것만</button>
           </div></div>
           <div className="filter-block profile-block"><h3>맞춤 프로필</h3><label className="toggle-row"><input type="checkbox" checked={profileOn} onChange={(event) => setProfileOn(event.target.checked)} /> 신체·다이어트 목표 반영</label><div className={`profile-grid profile-preview ${profileOn ? "enabled" : "disabled"}`}><select disabled={!profileOn} value={profile.sex} onChange={(e) => setProfile({ ...profile, sex: e.target.value })}><option>여성</option><option>남성</option></select><select disabled={!profileOn} value={profile.goal} onChange={(e) => setProfile({ ...profile, goal: e.target.value })}><option>감량</option><option>유지</option><option>증량</option></select><NumberField disabled={!profileOn} label="나이" value={profile.age} onChange={(age) => setProfile({ ...profile, age })} /><NumberField disabled={!profileOn} label="키(cm)" value={profile.height} onChange={(height) => setProfile({ ...profile, height })} /><NumberField disabled={!profileOn} label="체중(kg)" value={profile.weight} onChange={(weight) => setProfile({ ...profile, weight })} /><div className="target-calorie">하루 참고 목표 <b>{targetCalories.toLocaleString()} kcal</b></div></div>{!profileOn && <button className="profile-enable-hint" onClick={() => setProfileOn(true)}>체크하고 맞춤 추천 사용하기 →</button>}</div>
-          <div className="filter-block nutrition-block"><h3>영양 조건</h3><Range label="최대 칼로리" value={maxCalories} min={100} max={1200} step={50} unit="kcal" onChange={setMaxCalories} /><Range label="최소 단백질" value={minProtein} min={0} max={60} step={5} unit="g" onChange={setMinProtein} /><Range label="최대 나트륨" value={maxSodium} min={100} max={3000} step={100} unit="mg" onChange={setMaxSodium} /></div>
+          <div className="filter-block nutrition-block"><h3>영양 조건</h3><Range label="최대 칼로리" value={maxCalories} min={100} max={1200} step={50} unit="kcal" onChange={(value) => { setMaxCalories(value); setNutritionPreset("custom"); }} /><Range label="최소 단백질" value={minProtein} min={0} max={60} step={5} unit="g" onChange={(value) => { setMinProtein(value); setNutritionPreset("custom"); }} /><Range label="최대 나트륨" value={maxSodium} min={100} max={3000} step={100} unit="mg" onChange={(value) => { setMaxSodium(value); setNutritionPreset("custom"); }} /></div>
         </section></Reveal></div>
 
         <Reveal><section className="category-section"><div className="section-intro compact"><span>02 · 카테고리</span><h2>어떤 종류를 찾고 있나요?</h2></div><div className="category-grid">{BRAND_CATEGORY_ORDER.map((category) => <button className={brandCategory === category ? "active" : ""} key={category} onClick={() => setBrandCategory(category)}><b>{category}</b><small>{category === "전체" ? "모든 브랜드" : `${brandOptions.filter((brand) => BRAND_CATEGORIES[brand]?.includes(category)).length}개 브랜드`}</small></button>)}</div><div className="brand-picker">{brandOptions.filter((brand) => brandCategory === "전체" || BRAND_CATEGORIES[brand]?.includes(brandCategory)).map((brand) => <button key={brand} className={brands.includes(brand) ? "active" : ""} onClick={() => setBrands((current) => current.includes(brand) ? current.filter((x) => x !== brand) : [...current, brand])}><Image src={BRAND_LOGOS[brand]} alt="" width={44} height={44} /><span>{brand}</span></button>)}</div></section></Reveal>
 
-        <nav className="tabs">
+        <nav className="tabs" id="workspace">
           <TabButton active={tab === "menus"} onClick={() => changeTab("menus")} icon={<MenuIcon size={17} />} label="추천 메뉴" />
           <TabButton mealTarget receiving={Boolean(mealFlight)} active={tab === "cart"} onClick={() => changeTab("cart")} icon={<UtensilsCrossed size={17} />} label={`나의 한 끼 (${cartCount})`} />
           <TabButton active={tab === "map"} onClick={() => changeTab("map")} icon={<MapPin size={17} />} label="주변 매장" />
@@ -320,6 +382,8 @@ export default function HanipApp() {
 }
 
 function Reveal({ children }: { children: React.ReactNode }) { const ref = useRef<HTMLDivElement>(null); useEffect(() => { const node = ref.current; if (!node) return; const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && node.classList.add("visible"), { threshold: .12 }); observer.observe(node); return () => observer.disconnect(); }, []); return <div ref={ref} className="reveal">{children}</div>; }
+function Metric({ label, value, note }: { label: string; value: string; note: string }) { return <div className="hybrid-metric"><span>{label}</span><b>{value}</b><small>{note}</small></div>; }
+function CoverageBar({ label, value, detail, price = false }: { label: string; value: number; detail: string; price?: boolean }) { return <div className={`coverage-bar ${price ? "price" : ""}`}><span><b>{label}</b><strong>{value}%</strong></span><div><i style={{ width: `${value}%` }} /></div><small>{detail}</small></div>; }
 function TabButton({ active, onClick, label, icon, mealTarget = false, receiving = false }: { active: boolean; onClick: () => void; label: string; icon?: React.ReactNode; mealTarget?: boolean; receiving?: boolean }) { return <button data-meal-tab={mealTarget ? "true" : undefined} className={`${active ? "active" : ""} ${receiving ? "meal-tab-receiving" : ""}`} onClick={onClick}>{icon}{label}</button>; }
 function NumberField({ label, value, onChange, disabled = false }: { label: string; value: number; onChange: (value: number) => void; disabled?: boolean }) { return <label><span>{label}</span><input disabled={disabled} type="number" value={value} onChange={(e) => onChange(Number(e.target.value))} /></label>; }
 function Range({ label, value, min, max, step, unit, onChange }: { label: string; value: number; min: number; max: number; step: number; unit: string; onChange: (value: number) => void }) { return <label className="range"><span>{label}<b>{value} {unit}</b></span><input type="range" value={value} min={min} max={max} step={step} onChange={(e) => onChange(Number(e.target.value))} /></label>; }
